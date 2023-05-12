@@ -19,13 +19,12 @@ fn main() {
         .expect("Failed To Read File");
 
     if !content.contains("template"){
-        let new_cpp_name_path = file_path.file_name().unwrap().to_str().unwrap();
-        let new_cpp_name_list: Vec<_> = new_cpp_name_path.split('.').collect();
-        let new_cpp_name = new_cpp_name_list[0];
+        let file_name = file_path.file_name().unwrap().to_str().unwrap();
+        let new_cpp_name = Path::new(file_name).file_stem().unwrap().to_str().unwrap();
         let new_cpp_path = file_path.parent().unwrap().to_str().unwrap();
+        let new_cpp = format!("{}/{}.cpp", new_cpp_path, new_cpp_name);
 
-        let new_cpp = new_cpp_path.to_owned() + "/" + new_cpp_name + ".cpp";
-        let mut new_cpp_file = fs::File::create(new_cpp);
+        let new_cpp_file = fs::File::create(new_cpp);
     }
 
     // println!("{content}");
