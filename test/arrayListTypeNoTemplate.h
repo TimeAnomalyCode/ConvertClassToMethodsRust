@@ -108,7 +108,7 @@ public:
     ArrayListType (const ArrayListType& otherList);
        //Copy constructor
 
-    virtual ~ArrayListType();
+    ~ArrayListType();
       //Destructor
       //Deallocate the memory occupied by the array.
 
