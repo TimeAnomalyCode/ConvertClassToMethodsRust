@@ -29,8 +29,13 @@ fn main() {
         let mut new_cpp_file = fs::File::create(new_cpp);
 
         let mut class_name = String::new();
+
+        let mut is_public_method = false;
         let mut public_methods: Vec<String> = vec![];
-        let mut isPublicMethod = false;
+        
+        let mut is_class_variable = false;
+        let mut class_variables: Vec<String> = vec![];
+
         for line in content.lines(){
             let new_line = line.trim_start();
             if new_line.starts_with("//") || new_line.is_empty() || new_line.contains("#") || new_line.contains("{") || new_line.contains("}") || new_line.contains("virtual"){
@@ -42,16 +47,31 @@ fn main() {
             }
 
             if new_line.starts_with("public:"){
-                isPublicMethod = true;
+                is_public_method = true;
                 continue;
             }
 
-            if isPublicMethod {
+            if is_public_method {
                 if new_line.contains("private:") || new_line.contains("protected:") || new_line.contains("}"){
-                    isPublicMethod = false;
-                    continue;
+                    is_public_method = false;
                 }
-                public_methods.push(new_line.to_string());
+                else {
+                    public_methods.push(new_line.to_string());
+                }
+            }
+
+            if new_line.contains("protected:") || new_line.contains("private:"){
+                is_class_variable = true;
+                continue;
+            }
+
+            if is_class_variable {
+                if new_line.contains("public:") || new_line.contains("}"){
+                    is_class_variable = false;
+                }
+                else {
+                    class_variables.push(new_line.to_string());
+                }
             }
             // println!("{}", new_line);
         }
@@ -67,6 +87,26 @@ fn main() {
             \n
             ")
             .to_string();
+
+        for method in public_methods{
+            if method.starts_with("void") || method.starts_with("int") || method.starts_with("char") || method.starts_with("bool"){
+
+                let new_method = method.trim_end_matches(';');
+                let signature = new_method.splitn(2, " ").nth(1).unwrap();
+                let new_method = format!("{} {}::{}{{\n\n}}", method.split_whitespace().next().unwrap(), class_name, signature);
+
+                println!("{}", new_method);
+            }
+            else {
+                // for constructor/deconstructor
+                
+                let new_method = method.to_owned();
+                let new_method = new_method.trim_end_matches(';');
+                let new_method = format!("{}::{}{{\n\n}}", class_name, new_method);
+
+                println!("{}", new_method);
+            }
+        }
 
     }
 
