@@ -67,6 +67,9 @@ fn main() {
 
         let (public_methods, class_variables, class_name, template_class) = get_public_methods_and_class_variables_and_class_name_and_template(content);
 
+        let template = change_public_methods_to_cpp_template(public_methods, class_name, template_class);
+    
+        new_cpp.write(template.as_bytes()).expect("Failed to Write");
     }
     // println!("{content}");
 }
@@ -83,11 +86,11 @@ fn get_public_methods_and_class_variables_and_class_name_and_template(content: S
 
     for line in content.lines(){
         let new_line = line.trim_start();
-        if new_line.starts_with("//") || new_line.is_empty() || new_line.contains("#") || new_line.contains("{") || new_line.contains("}") || new_line.contains("virtual"){
+        if new_line.starts_with("//") || new_line.is_empty() || new_line.contains("#") || new_line.contains("}") || new_line.contains("virtual"){
             continue;
         }
 
-        if new_line.contains("class"){
+        if new_line.starts_with("class"){
             class_name = new_line.replace("class", "").trim().to_owned();
         }
 
@@ -145,6 +148,34 @@ fn change_public_methods_to_cpp(public_methods: Vec<String>, class_name: String)
         else {
             // for constructor/deconstructor
             let new_method = format!("\n{}::{}{{\n\n}}\n", class_name, new_method);
+
+            template.push_str(&new_method);
+            println!("{}", new_method);
+        }
+    }
+
+    return template;
+}
+
+fn change_public_methods_to_cpp_template(public_methods: Vec<String>, class_name: String, template_class: String) -> String{
+    let mut template = String::new();
+    let template_class = format!("\n{}\n", template_class);
+    for method in public_methods{
+
+        let new_method = method.trim_end_matches(';');
+        template.push_str(&template_class);
+
+        if method.starts_with("void") || method.starts_with("int") || method.starts_with("char") || method.starts_with("bool") || method.starts_with("T"){
+
+            let signature = new_method.splitn(2, " ").nth(1).unwrap();
+            let new_method = format!("\n{} {}<T>::{}{{\n\n}}\n", method.split_whitespace().next().unwrap(), class_name, signature);
+
+            template.push_str(&new_method);
+            println!("{}", new_method);
+        }
+        else {
+            // for constructor/deconstructor
+            let new_method = format!("\n{}<T>::{}{{\n\n}}\n", class_name, new_method);
 
             template.push_str(&new_method);
             println!("{}", new_method);
