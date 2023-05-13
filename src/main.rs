@@ -78,7 +78,7 @@ fn main() {
 
         // class_name = class_name.trim().to_owned();
 
-        let (public_methods, class_variables, class_name) = get_public_methods_and_class_variables_and_className(content);
+        let (public_methods, class_variables, class_name) = get_public_methods_and_class_variables_and_class_name(content);
 
         let mut template = format!(
             "#include <iostream>\n#include \"{file_name}\"\n\nusing namespace std;\n\n")
@@ -113,13 +113,13 @@ fn main() {
             .open(file_path)
             .expect("Failed to Open File");
 
-        let (public_methods, class_variables, class_name) = get_public_methods_and_class_variables_and_className(content);
+        let (public_methods, class_variables, class_name) = get_public_methods_and_class_variables_and_class_name(content);
 
     }
     // println!("{content}");
 }
 
-fn get_public_methods_and_class_variables_and_className(content: String) -> (Vec<String>, Vec<String>, String) {
+fn get_public_methods_and_class_variables_and_class_name(content: String) -> (Vec<String>, Vec<String>, String) {
     let mut class_name = String::new();
 
     let mut is_public_method = false;
