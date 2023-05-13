@@ -26,7 +26,8 @@ fn main() {
         let new_cpp_path = file_path.parent().unwrap().to_str().unwrap();
         let new_cpp = format!("{}/{}.cpp", new_cpp_path, new_cpp_name);
 
-        let mut new_cpp_file = fs::File::create(new_cpp);
+        let mut new_cpp_file = fs::File::create(new_cpp)
+            .expect("Failed to create file");
 
         let mut class_name = String::new();
 
@@ -78,36 +79,32 @@ fn main() {
 
         class_name = class_name.trim().to_owned();
 
-        let template = format!(
-            "
-            #include <iostream>\n
-            #include \"{file_name}\"\n
-            \n
-            using namespace std;\n
-            \n
-            ")
+        let mut template = format!(
+            "#include <iostream>\n#include \"{file_name}\"\n\nusing namespace std;\n\n")
             .to_string();
 
         for method in public_methods{
+
+            let new_method = method.trim_end_matches(';');
+
             if method.starts_with("void") || method.starts_with("int") || method.starts_with("char") || method.starts_with("bool"){
 
-                let new_method = method.trim_end_matches(';');
                 let signature = new_method.splitn(2, " ").nth(1).unwrap();
-                let new_method = format!("{} {}::{}{{\n\n}}", method.split_whitespace().next().unwrap(), class_name, signature);
+                let new_method = format!("\n{} {}::{}{{\n\n}}\n", method.split_whitespace().next().unwrap(), class_name, signature);
 
+                template.push_str(&new_method);
                 println!("{}", new_method);
             }
             else {
                 // for constructor/deconstructor
-                
-                let new_method = method.to_owned();
-                let new_method = new_method.trim_end_matches(';');
-                let new_method = format!("{}::{}{{\n\n}}", class_name, new_method);
+                let new_method = format!("\n{}::{}{{\n\n}}\n", class_name, new_method);
 
+                template.push_str(&new_method);
                 println!("{}", new_method);
             }
         }
 
+        new_cpp_file.write(template.as_bytes()).expect("Write Failed");
     }
 
     // println!("{content}");
