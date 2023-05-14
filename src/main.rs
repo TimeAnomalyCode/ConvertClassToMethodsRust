@@ -28,6 +28,8 @@ fn main() {
     }
 
     println!("Done");
+    let mut stop_console = String::new();
+    std::io::stdin().read_line(&mut stop_console).expect("Failed to stop");
 }
 
 fn get_class_name(file_content: &String) -> String{
@@ -132,7 +134,7 @@ fn get_file_path_from_user()-> String {
     let mut file_path = String::new();
     let args: Vec<String> = env::args().collect();
 
-    if args.len() > 0 {
+    if args.len() > 1 {
         let file_path = &args[1];
         return file_path.to_string();
     }
