@@ -12,7 +12,7 @@ fn main() {
     let file_path = Path::new(&binding);
     let file_content = fs::read_to_string(file_path).expect("File does not Exist");
 
-    let template_class = get_template_class(&file_content);
+    let (template_class, template_type) = get_template_class(&file_content);
     let class_name = get_class_name(&file_content);
     let public_methods = get_public_methods(&file_content);
 
@@ -23,7 +23,7 @@ fn main() {
     }
     else {
         let (file_name, new_cpp_path) = get_file_name(file_path, "h".to_string());
-        let converted_public_methods_template = convert_public_methods_to_cpp_template(public_methods, &template_class, class_name);
+        let converted_public_methods_template = convert_public_methods_to_cpp_template(public_methods, &template_class, class_name, &template_type);
         append_to_file(&new_cpp_path, &converted_public_methods_template);
     }
 
@@ -64,7 +64,7 @@ fn get_public_methods(file_content: &String) -> Vec<String>{
             continue;
         }
 
-        if line.starts_with("private:") || line.starts_with("protected:"){
+        if line.starts_with("private:") || line.starts_with("protected:") || line.starts_with("};"){
             is_public_methods = false;
             continue;
         }
@@ -92,7 +92,7 @@ fn get_private_methods(file_content: &String) -> Vec<String>{
             continue;
         }
 
-        if line.starts_with("public:") || line.starts_with("protected:"){
+        if line.starts_with("public:") || line.starts_with("protected:")  || line.starts_with("};"){
             is_private_methods = false;
             continue;
         }
@@ -105,10 +105,11 @@ fn get_private_methods(file_content: &String) -> Vec<String>{
     return private_methods;
 }
 
-fn get_template_class(file_content: &String)-> String {
+fn get_template_class(file_content: &String)-> (String, String) {
     let mut template_name = String::new();
+    let mut template_type = String::new();
     // let mut template_class: Vec<String> = vec![];
-    let mut is_template_class = false;
+    // let mut is_template_class = false;
     for line in file_content.lines(){
         let line = line.trim_start();
 
@@ -117,17 +118,14 @@ fn get_template_class(file_content: &String)-> String {
         }
 
         if line.starts_with("template"){
-            is_template_class = true;
-        }
-
-        if is_template_class {
             template_name = line.to_string();
 
+            template_type = line.replace("template ", "").replace("class ", "");
             break;
         }
     }
 
-    return template_name;
+    return (template_name, template_type);
 }
 
 fn get_file_path_from_user()-> String {
@@ -165,14 +163,14 @@ fn convert_public_methods_to_cpp(public_methods: Vec<String>, file_name: String,
             let new_method = format!("\n{} {}::{}{{\n\n}}\n", method.split_whitespace().next().unwrap(), class_name, signature);
 
             template.push_str(&new_method);
-            // println!("{}", new_method);
+            println!("{}", new_method);
         }
         else {
             // for constructor/deconstructor
             let new_method = format!("\n{}::{}{{\n\n}}\n", class_name, new_method);
 
             template.push_str(&new_method);
-            // println!("{}", new_method);
+            println!("{}", new_method);
         }
     }
 
@@ -193,7 +191,7 @@ fn output_new_file(file_path: &String, converted_public_methods: &String){
     new_cpp_file.write(converted_public_methods.as_bytes()).expect("Fail to write to file");
 }
 
-fn convert_public_methods_to_cpp_template(public_methods: Vec<String>, template_class: &String, class_name: String) -> String {
+fn convert_public_methods_to_cpp_template(public_methods: Vec<String>, template_class: &String, class_name: String, template_type: &String) -> String {
 
     let mut template = "\n".to_string();
 
@@ -205,14 +203,14 @@ fn convert_public_methods_to_cpp_template(public_methods: Vec<String>, template_
         if method.starts_with("void") || method.starts_with("int") || method.starts_with("char") || method.starts_with("bool"){
 
             let signature = new_method.splitn(2, " ").nth(1).unwrap();
-            let new_method = format!("\n{} {}<T>::{}{{\n\n}}\n", method.split_whitespace().next().unwrap(), class_name, signature);
+            let new_method = format!("\n{} {}{}::{}{{\n\n}}\n", method.split_whitespace().next().unwrap(), class_name, template_type, signature);
 
             template.push_str(&new_method);
             println!("{}", new_method);
         }
         else {
             // for constructor/deconstructor
-            let new_method = format!("\n{}<T>::{}{{\n\n}}\n", class_name, new_method);
+            let new_method = format!("\n{}{}::{}{{\n\n}}\n", class_name, template_type, new_method);
 
             template.push_str(&new_method);
             println!("{}", new_method);
