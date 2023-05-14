@@ -3,10 +3,13 @@ use std::io;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::env;
 
 fn main() {
     // let file_path = Path::new(r"test\arrayListTypeNoTemplate.h");
-    let file_path = Path::new(r"test\templateClass.h");
+    // let file_path = Path::new(r"test\templateClass.h");
+    let binding = get_file_path_from_user();
+    let file_path = Path::new(&binding);
     let file_content = fs::read_to_string(file_path).expect("File does not Exist");
 
     let template_class = get_template_class(&file_content);
@@ -127,6 +130,12 @@ fn get_template_class(file_content: &String)-> String {
 
 fn get_file_path_from_user()-> String {
     let mut file_path = String::new();
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() > 0 {
+        let file_path = &args[1];
+        return file_path.to_string();
+    }
 
     print!("Enter filePath: ");
     let _ = io::stdout().flush();
