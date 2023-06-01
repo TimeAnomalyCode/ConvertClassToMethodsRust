@@ -17,12 +17,12 @@ fn main() {
     let public_methods = get_public_methods(&file_content);
 
     if template_class.is_empty(){
-        let (file_name, new_cpp_path) = get_file_name(file_path, "cpp".to_string());
+        let (file_name, new_cpp_path) = get_file_name(file_path, "Imp.cpp".to_string());
         let converted_public_methods = convert_public_methods_to_cpp(public_methods, file_name, class_name);
         output_new_file(&new_cpp_path, &converted_public_methods);
     }
     else {
-        let (file_name, new_cpp_path) = get_file_name(file_path, "h".to_string());
+        let (file_name, new_cpp_path) = get_file_name(file_path, ".h".to_string());
         let converted_public_methods_template = convert_public_methods_to_cpp_template(public_methods, &template_class, class_name, &template_type);
         append_to_file(&new_cpp_path, &converted_public_methods_template);
     }
@@ -181,7 +181,7 @@ fn get_file_name(file_path: &Path, ext: String) -> (String, String){
     let file_name = file_path.file_name().unwrap().to_str().unwrap();
     let new_cpp_name = Path::new(file_name).file_stem().unwrap().to_str().unwrap();
     let new_cpp_parent = file_path.parent().unwrap().to_str().unwrap();
-    let new_cpp_path = format!("{}/{}.{}", new_cpp_parent, new_cpp_name, ext);
+    let new_cpp_path = format!("{}/{}{}", new_cpp_parent, new_cpp_name, ext);
 
     return (file_name.to_string(), new_cpp_path);
 }
